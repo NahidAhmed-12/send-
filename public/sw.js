@@ -1,14 +1,22 @@
+console.log('Service Worker file loaded.');
+
 self.addEventListener('push', event => {
-    const data = event.data.json();
-    console.log('New notification received', data);
+    console.log('[Service Worker] Push Received.');
+    
+    try {
+        const data = event.data.json();
+        console.log('[Service Worker] Notification data:', data);
 
-    const options = {
-        body: data.body,
-        icon: 'https://via.placeholder.com/128', // একটি আইকন যোগ করতে পারেন
-        badge: 'https://via.placeholder.com/64' // একটি ব্যাজ যোগ করতে পারেন
-    };
+        const options = {
+            body: data.body,
+            icon: 'https://via.placeholder.com/128', // একটি আইকন
+            badge: 'https://via.placeholder.com/64' // একটি ব্যাজ
+        };
 
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
+        event.waitUntil(
+            self.registration.showNotification(data.title, options)
+        );
+    } catch (e) {
+        console.error('[Service Worker] Error processing push event:', e);
+    }
 });
