@@ -4,27 +4,26 @@ const path = require('path');
 
 const dbPath = path.resolve('/tmp', 'db.json');
 
-export default async function handler(req, res) {
+// "export default async function handler" এর পরিবর্তে "module.exports" ব্যবহার করা হয়েছে
+module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
     console.log('Send notification API called.');
 
-    // Vercel এর Environment Variables থেকে কী গুলো লোড হবে
     const vapidKeys = {
         publicKey: process.env.VAPID_PUBLIC_KEY,
         privateKey: process.env.VAPID_PRIVATE_KEY,
     };
     
-    // কী-গুলো ঠিকভাবে লোড হয়েছে কি না, তা চেক করুন
     if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
         console.error("VAPID keys are not set in environment variables.");
         return res.status(500).json({ message: "Server configuration error." });
     }
 
     webpush.setVapidDetails(
-        'mailto:your-email@example.com', // এখানে একটি ইমেইল দিন
+        'mailto:your-email@example.com',
         vapidKeys.publicKey,
         vapidKeys.privateKey
     );
@@ -48,10 +47,8 @@ export default async function handler(req, res) {
         
         const promises = subscriptions.map(sub => 
             webpush.sendNotification(sub, notificationPayload)
-                .then(response => console.log(`Notification sent to ${sub.endpoint.substring(0, 30)}...`, response.statusCode))
                 .catch(err => {
-                    console.error(`Error sending to ${sub.endpoint.substring(0, 30)}...`, err.statusCode);
-                    // এখানে 410 বা 404 কোড পেলে সাবস্ক্রিপশনটি db থেকে মুছে ফেলা উচিত
+                    console.error(`Error sending notification:`, err.statusCode, err.body);
                 })
         );
         
@@ -59,11 +56,11 @@ export default async function handler(req, res) {
 
         res.status(200).json({ message: 'Notifications sent.' });
     } catch (error) {
-        console.error('Failed to read subscriptions or send notifications:', error);
-        // যদি db.json ফাইলটি না পাওয়া যায়
         if (error.code === 'ENOENT') {
-             return res.status(500).json({ message: 'No subscriptions found. Has anyone subscribed?' });
+             console.error('db.json not found. No one has subscribed yet.');
+             return res.status(500).json({ message: 'No subscriptions found.' });
         }
+        console.error('Failed to send notifications:', error);
         res.status(500).json({ message: 'Failed to send notifications.' });
     }
-}
+};

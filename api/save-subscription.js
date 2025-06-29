@@ -14,7 +14,8 @@ async function ensureDbFileExists() {
     }
 }
 
-export default async function handler(req, res) {
+// "export default async function handler" এর পরিবর্তে "module.exports" ব্যবহার করা হয়েছে
+module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
@@ -41,4 +42,4 @@ export default async function handler(req, res) {
         console.error('Failed to save subscription:', error);
         res.status(500).json({ message: 'Internal Server Error.' });
     }
-}
+};
